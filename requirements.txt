@@ -56,4 +56,5 @@ wasabi==0.6.0
 Werkzeug==1.0.0
 wordcloud==1.6.0
 wrapt==1.10.11
+xlrd==1.2.0
 zipp==3.1.0
