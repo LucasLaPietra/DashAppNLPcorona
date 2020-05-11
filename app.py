@@ -42,7 +42,7 @@ def transformdf(df, fechai, fechaf):
     df_new = df.groupby(['Diario', 'Categoria'], as_index=False).aggregate(aggregation_functions)
     return df_new
 
-
+nltk.download('stopwords')
 cantpalabras = 25
 dforig = pd.read_excel('https://github.com/luxlp/NoticiasScrapeadas/blob/master/BDNoticias-Abril.xlsx?raw=true')
 df = transformdf(dforig, '25/04/2020', '30/04/2020')
