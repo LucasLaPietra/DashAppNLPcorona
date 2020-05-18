@@ -133,7 +133,8 @@ layout = Layout(
 fig = px.bar(dffreq.nlargest(cantpalabras, columns=['Frecuencia']), x='Palabra', y='Frecuencia', color='Frecuencia')
 fig.layout = layout
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(external_stylesheets=[dbc.themes.DARKLY])
+app = dash.Dash(__name__,external_stylesheets=[dbc.themes.DARKLY])
+server = app.server
 
 BarraSuperior = dbc.Navbar(
     children=[
@@ -376,4 +377,5 @@ def update_options(value, fechai, fechaf):
         return [{'label': categoria, 'value': categoria} for categoria in catlanacion], catlanacion[0]
 
 
-app.run_server(debug=True, use_reloader=False)
+if __name__ == '__main__':
+    app.run_server(debug=True, use_reloader=False)
