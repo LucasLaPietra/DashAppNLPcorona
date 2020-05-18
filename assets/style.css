@@ -14,85 +14,65 @@ nav {
   background-color: #050505;
 }
 
-h1, h2, h3, h4 {
+h1 {
   font-family: "Open Sans";
   font-weight: bold;
   letter-spacing: 2.1px;
   font-size: 21px;
-  padding-top: 12px;
-  padding-left: 12px;
 }
+
+h2
+{
+  font-family: "Open Sans";
+  letter-spacing: 2px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+h3
+{
+  font-family: "Open Sans";
+  letter-spacing: 2px;
+  font-size: 18px;
+}
+
+h4
+{
+  font-family: "Open Sans";
+  letter-spacing: 2px;
+  font-size: 16px;
+  font-weight: bold;
+}
+
 h5
 {
   font-family: "Open Sans";
   letter-spacing: 2px;
-  font-size: 14px;
-  padding-left: 12px;
+  font-size: 16px;
 }
 p {
   font-family: "Open Sans";
   font-weight: 400;
   font-size: 14px;
-  padding-left: 12px;
-}
-a {
-  text-decoration: none;
-}
-.bg-grey{
-  background-color: #31302F;
-}
-.text-padding{
-  padding: 5px;
-}
-/* Graph Layout ––––––––––––––––––––––––––––––––––––––––––––––––––*/
-.div-for-charts{
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  width: 100%;
-}
-#histogram {
-  flex-grow: 1 
-}
-#map-graph {
-  flex-grow: 1 
-}
-.mapboxgl-canvas, .mapboxgl-map {
-  min-width: 100%;
-}
-/* Graph Control Objects ––––––––––––––––––––––––––––––––––––––––––––––––––*/
-.div-user-controls {
-  padding-left: 50px;
-  padding-right: 50px;
 }
 
-.div-datepick {
-   margin-top: 30px;
-   padding-left: 50px;
-   padding-right: 50px;
-   text-align: center;
-}
-
-.div-slider {
-   margin-top: 30px;
-   padding-left: 50px;
-   padding-right: 50px;
-}
-
-.div-for-dropdown {
-  padding-top: 10px;
-}
-.div-for-slider {
-  width: 97%;
-  text-align: center;
-}
-.div-for-logo {
-  text-align: right;
-}
 .logo {
-  width: 100px;
-  padding: 10px;
+width: 150px;
+padding: 10px;
 }
+
+.jumbotron {
+  background-color: #444444;
+}
+
+.card{
+text-align: left;
+}
+
+.daterow{
+text-align: center;
+}
+
 .rc-slider-track {
   background-color: #b0f2bc;
 }
@@ -122,28 +102,15 @@ a {
 
 .Select-control, .Select-menu-outer, .DateRangePicker.DateRangePicker_1, .Select-multi-value-wrapper, .select-up, .is-open .Select-control {
   background-color: #1E1E1E;
-  color: white;
-  
+  color: white;  
 }
 
-#bar-selector .Select-multi-value-wrapper{
-  max-height: 82px;
-  overflow-y: auto;
-  margin: 0px 0px -3px 0px;
-}
-
-.Select-control{
-  border: 0.5px solid #dbdbdb44;
-}
 
 .has-value.Select--single>.Select-control .Select-value .Select-value-label, .has-value.is-pseudo-focused.Select--single>.Select-control .Select-value .Select-value-label {
   color: white;
 }
-._dash-app-content {
-  overflow-x: hidden;
-  overflow-y: hidden;
-  position: relative;
-}
+
+
 .has-value.Select--single>.Select-control .Select-value .Select-value-label, .has-value.is-pseudo-focused.Select--single>.Select-control .Select-value .Select-value-label{
   color: #d8d8d8;
   font-weight: 400;
@@ -159,16 +126,6 @@ a {
   border: 0.5px solid #dbdbdb44;
 }
 
-#date-picker{
-  width: 100%;
-}
-
-._dash-undo-redo {
-  display: none;
-}
-.DateInput.DateInput_1{
-  width: 100%;
-}
 
 .DateInput_input.DateInput_input_1{
   background-color: #1e1e1e;
@@ -189,9 +146,14 @@ a {
 .DateRangePickerInput__withBorder {
   border-radius: 3px;
   color: #dbdbdb;
-  background: #1e1e1e;
-  background-color: #1e1e1e;
+  background: #313131;
+  background-color: #313131;
 }
+
+.DateRangePickerInput_arrow_svg{
+  fill: #d8d8d8
+}
+
 .DateRangePickerInput.DateRangePickerInput_1.DateRangePickerInput__withBorder.DateRangePickerInput__withBorder_2 {
   border: 0.0px solid #dbdbdb;
   display: block;
@@ -199,11 +161,6 @@ a {
 .DateRangePicker_1 {
   border: 0.0px solid #dbdbdb;
   display: block;
-}
-
-.DayPickerKeyboardShortcuts_show__bottomRight::before
-{
- border-right:33px solid #4f0d43
 }
 
 .CalendarDay__selected, .CalendarDay__selected:active, .CalendarDay__selected:hover
@@ -221,65 +178,4 @@ a {
 .DateRangePicker_picker, .DateRangePicker_picker_1, .DateRangePicker_picker__directionLeft,
 .DateRangePicker_picker__directionLeft_2{
   filter:invert(100%);
-}
-
-/* For Mobile Phones and small screens ––––––––––––––––––––––––––––––––––––––––––––––––––*/
-@media only screen and (max-width: 768px) {
-  .four, .eight {
-      min-width: 100%;
- }
-  h1, h2, h3, p {
-      text-align: center;
- }
-  body {
-      display: block;
-      margin: 0px;
-      overflow-y: scroll;
-  }
-
- .div-user-controls {
-    padding: 32px;
- }
- 
- .side-by-side{
-    display: inline-block;
-    width: 48%;
-  }
-
-   
- .side-by-side-right{
-    display: inline-block;
-    width: 48%;
-    float:right;
-  }
-  .div-for-charts{
-    margin: 0px;
-  }
-} 
-
-/* width */
-::-webkit-scrollbar {
-  width: 10px !important;
-  display: block !important;
-}
-
-/* Track */
-::-webkit-scrollbar-track {
-  background: #1e1e1e !important; 
-  border-radius: 10px !important;
-  display: block !important;
-}
-
-/* Handle */
-::-webkit-scrollbar-thumb {
-  background: transparent; 
-}
-
-/* Handle on hover */
-::-webkit-scrollbar-thumb:hover {
-  background: #d8d8d870 !important; 
-}
-
-.CalendarMonth_table td {
-  padding: unset;  
 }

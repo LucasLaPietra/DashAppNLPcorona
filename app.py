@@ -3,7 +3,7 @@
 Created on Thu Apr  2 19:08:59 2020
 
 @author: Lucas E. La Pietra
-Changes: implementado filtro por fechas
+Changes: transformada en app bootstrap
 """
 
 import pandas as pd
@@ -18,6 +18,7 @@ import dash_core_components as dcc
 import dash_html_components as html
 from plotly.graph_objs import *
 import re
+import time
 
 
 def generarstopwords():
@@ -26,10 +27,53 @@ def generarstopwords():
     return stopwords
 
 
-def generardffrec(corpus):
+def generardffreccorpus(corpus):
     stopwords = generarstopwords()
-    freqdist = nltk.FreqDist(w.lower() for w in corpus if w.lower() not in stopwords)
+    freqdist = nltk.FreqDist(w for w in corpus if w.lower() not in stopwords)
+    dffreqcorpus = pd.DataFrame(freqdist.items(), columns=['Palabra', 'Frecuencia'])
+    return dffreqcorpus
+
+
+def addtrigrams(dffreq):
+    listatuplas = []
+    for i in range(len(dffreq)):
+        for j in range(len(dffreq)):
+            if (dffreq.iloc[i]['Palabra'][1] == dffreq.iloc[j]['Palabra'][0]) and (
+                    dffreq.iloc[i]['Frecuencia'] == dffreq.iloc[j]['Frecuencia']):
+                trigram = dffreq.iloc[i]['Palabra'] + ((dffreq.iloc[j]['Palabra'][1]),)
+                dffreq.at[i, 'Palabra'] = trigram
+                listatuplas.append(dffreq.iloc[j]['Palabra'])
+    for tupla in listatuplas:
+        dffreq = dffreq[dffreq.Palabra != tupla]
+    return dffreq
+
+
+def generardffrecbgs(corpus):
+    bgs = nltk.bigrams(corpus)
+    stopwords = generarstopwords()
+    freqdist = nltk.FreqDist(w for w in bgs if (w[0].lower() not in stopwords) and (w[1].lower() not in stopwords))
     dffreq = pd.DataFrame(freqdist.items(), columns=['Palabra', 'Frecuencia'])
+    dffreq = dffreq[dffreq['Frecuencia'] > 1]
+    dffreq = dffreq.reset_index(drop=True)
+    dffreq = addtrigrams(dffreq)
+    return dffreq
+
+
+def generardffrec(corpus):
+    listapalabras = []
+    dffreq = generardffreccorpus(corpus)
+    dffreq2 = generardffrecbgs(corpus)
+    dffreq2 = dffreq2[dffreq2['Frecuencia'] > 1]
+    for b in range(len(dffreq2)):
+        freq = dffreq.iloc[b]['Frecuencia']
+        for w in dffreq2.iloc[b]['Palabra']:
+            if dffreq.iloc[b]['Frecuencia'] == freq:
+                listapalabras.append(w)
+    for palabra in listapalabras:
+        dffreq = dffreq[dffreq.Palabra != palabra]
+    dffreq2['Palabra'] = dffreq2['Palabra'].str.join(" ")
+    dffreq = dffreq.append(dffreq2)
+    dffreq = dffreq.reset_index(drop=True)
     return dffreq
 
 
@@ -42,7 +86,27 @@ def transformdf(df, fechai, fechaf):
     df_new = df.groupby(['Diario', 'Categoria'], as_index=False).aggregate(aggregation_functions)
     return df_new
 
-nltk.download('stopwords')
+
+def dfrepeticiondiarios(df, fechai, fechaf):
+    mask = (df['Fecha'] >= fechai) & (df['Fecha'] <= fechaf)
+    df = df.loc[mask]
+    df_new = df.groupby('Diario', as_index=False).size().reset_index(name='Count')
+    return df_new
+
+
+def dfrepeticioncategorias(df, fechai, fechaf):
+    mask = (df['Fecha'] >= fechai) & (df['Fecha'] <= fechaf)
+    df = df.loc[mask]
+    df_new = df.groupby(['Diario', 'Categoria'], as_index=False).size().reset_index(name='Count')
+    return df_new
+
+
+def preparardfbigramas(df):
+    df['Longitud'] = df['Palabra'].apply(len)
+    df['Palabra'] = df['Palabra'].apply(str)
+    return df
+
+
 cantpalabras = 25
 dforig = pd.read_excel('https://github.com/luxlp/NoticiasScrapeadas/blob/master/BDNoticias-Abril.xlsx?raw=true')
 df = transformdf(dforig, '25/04/2020', '30/04/2020')
@@ -69,74 +133,195 @@ layout = Layout(
 fig = px.bar(dffreq.nlargest(cantpalabras, columns=['Frecuencia']), x='Palabra', y='Frecuencia', color='Frecuencia')
 fig.layout = layout
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__)
-server = app.server
+app = dash.Dash(external_stylesheets=[dbc.themes.DARKLY])
+
+BarraSuperior = dbc.Navbar(
+    children=[
+        html.Div(
+            # Use row and col to control vertical alignment of logo / brand
+            dbc.Row(
+                [
+                    dbc.Col([
+                        html.A(html.Img(className="logo", src=app.get_asset_url("LogoUTN.png")),
+                               href='http://www.frcu.utn.edu.ar/')
+                    ], md=3),
+                    dbc.Col([
+                        html.H1(children='Frecuencia de palabras en las noticias sobre Coronavirus'),
+                        html.H5(children='Por Lucas La Pietra')
+                    ])
+                ],
+                align="center",
+                no_gutters=True, className='navbar'
+            )
+        )
+    ],
+    color="dark",
+    dark=True,
+    sticky="top"
+)
+
+SeleccionFecha = [
+    dbc.CardHeader(html.H5("Numero de noticias a analizar")),
+    dbc.CardBody(
+        [
+            dbc.Row(
+                dbc.Col([
+                    html.H4(children='Rango de fechas a analizar:'),
+                    dcc.DatePickerRange(
+                        id='daterange',
+                        min_date_allowed=dt(2020, 4, 25),
+                        max_date_allowed=dt(2020, 4, 30),
+                        start_date=dt(2020, 4, 25).date(),
+                        end_date=dt(2020, 4, 30).date(),
+                        display_format='D/M/Y',
+                        calendar_orientation='horizontal'),
+                    html.H3(id='totalNoticias')
+                ], width=6, className='daterow'
+
+                ), justify="center"
+            ),
+            dbc.Row(
+                [
+                    dbc.Col([
+                        dbc.Jumbotron([
+                            html.H5(children='Distribucion de noticias por diario'),
+                            dcc.Graph(id='figrepeticiondiarios', style={"padding-top": 50})
+                        ])
+                    ]
+                        , md=6
+                    ),
+                    dbc.Col(
+                        dbc.Jumbotron([
+                            html.H5(children='Cantidad de noticias por categoria para el diario:'),
+                            dcc.Dropdown(
+                                id='diarioDropdownRep',
+                                options=[
+                                    {'label': 'Infobae', 'value': 'Infobae'},
+                                    {'label': 'La Nacion', 'value': 'La Nacion'},
+                                    {'label': 'Clarin', 'value': 'Clarin'}
+                                ],
+                                value='Infobae',
+                                clearable=False),
+                            dcc.Graph(id='figrepeticioncategoria')
+                        ]), md=6
+                    )
+                ], style={"padding-top": 10})
+        ])
+]
+
+FreqHistGraph = [
+    dbc.CardHeader(html.H5("Analisis de frecuencia")),
+    dbc.CardBody(
+        [
+            dbc.Row(
+                [
+                    dbc.Col([
+                        html.Label('Seleccionar diario:'),
+                        dcc.Dropdown(
+                            id='DiarioDropdown',
+                            options=[
+                                {'label': 'Infobae', 'value': 'Infobae'},
+                                {'label': 'La Nacion', 'value': 'La Nacion'},
+                                {'label': 'Clarin', 'value': 'Clarin'}
+                            ],
+                            value='Infobae',
+                            clearable=False,
+                        )], md=6
+                    ),
+                    dbc.Col([
+                        html.Label('Seleccionar categoria:'),
+                        dcc.Dropdown(
+                            id="CatDropdown",
+                            options=[{'label': categoria, 'value': categoria} for categoria in categorias],
+                            value=categorias[0],
+                            clearable=False,
+                        )], md=6
+                    )
+                ]),
+            dbc.Row(
+                dbc.Col([
+                    html.Label('Cantidad de palabras a mostrar:'),
+                    dcc.Slider(
+                        id='slider',
+                        min=10,
+                        max=50,
+                        marks={10: '10',
+                               20: '20',
+                               30: '30',
+                               40: '40',
+                               50: '50'},
+                        value=25)], md=12
+                ), style={"padding-top": 10}
+            ),
+            dbc.Row(
+                dbc.Col(
+                    [
+                        dbc.Jumbotron([
+                            html.H5(children='Distribucion de frecuencia de palabras'),
+                            dcc.Graph(id='barchart')
+                        ])
+                    ]
+                    , md=12)
+            ),
+            dbc.Row(
+                dbc.Col(
+                    [
+                        dbc.Jumbotron([
+                            html.H5(children='N-gramas destacables'),
+                            dcc.Graph(id='ngramscatter')
+                        ])
+                    ]
+                    , md=12)
+            )
+        ])
+]
+
+BODY = dbc.Container(
+    [
+        dbc.Row([dbc.Col(dbc.Card(SeleccionFecha), className="w-100"), ], style={"marginTop": 30}),
+        dbc.Row([dbc.Col(dbc.Card(FreqHistGraph)), ], style={"marginTop": 30}),
+    ],
+    className="mt-12",
+)
 
 app.layout = html.Div(children=[
-    # fila titulo
-    html.Div(children=[
-        html.Div(children=[
-            html.H1(children='Frecuencia de palabras en las noticias sobre Coronavirus'),
-            html.H5(children='Por Lucas La Pietra')], className='ten columns'),
-        html.Div(children=[
-            html.Img(className="logo", src=app.get_asset_url("LogoUTN2.png"))], className='div-for-logo'
-        )
-    ], className='one row'),
-    html.Div(children=[
-        dcc.Graph(id='barchart', figure=fig)], className='six rows'),
-    # fila dropdowns
-    html.Div(children=[
-        html.Div(children=[
-            html.Label('Seleccionar diario:'),
-            dcc.Dropdown(
-                id='DiarioDropdown',
-                options=[
-                    {'label': 'Infobae', 'value': 'Infobae'},
-                    {'label': 'La Nacion', 'value': 'La Nacion'},
-                    {'label': 'Clarin', 'value': 'Clarin'}
-                ],
-                value='Infobae',
-                clearable=False,
-            )], className='six columns'),
-        html.Div(children=[
-            html.Label('Seleccionar categoria:'),
-            dcc.Dropdown(
-                id="CatDropdown",
-                options=[{'label': categoria, 'value': categoria} for categoria in categorias],
-                value=categorias[0],
-                clearable=False,
-            )], className='six columns')
-    ], className="div-user-controls one row"),
-    # fila date
-    html.Div(children=[
-        html.Label('Rango de fechas:'),
-        dcc.DatePickerRange(
-            id='daterange',
-            min_date_allowed=dt(2020, 4, 25),
-            max_date_allowed=dt(2020, 4, 30),
-            start_date=dt(2020, 4, 25).date(),
-            end_date=dt(2020, 4, 30).date(),
-            display_format='D/M/Y',
-            calendar_orientation='horizontal')
-    ], className="one row div-datepick"),
-    # fila slider
-    html.Div(children=[
-        html.Label('Cantidad de palabras a mostrar:'),
-        dcc.Slider(
-            id='slider',
-            min=10,
-            max=50,
-            marks={10: '10',
-                   20: '20',
-                   30: '30',
-                   40: '40',
-                   50: '50'},
-            value=25)
-    ], className="one row div-slider")
-])
+    BarraSuperior,
+    BODY])
 
 
-@app.callback(Output('barchart', 'figure'),
+@app.callback([Output('figrepeticiondiarios', 'figure'), Output('totalNoticias', 'children')],
+              [Input('daterange', 'start_date'), Input('daterange', 'end_date')]
+              )
+def update_figure(fechai, fechaf):
+    fechai = dt.strptime(re.split('T| ', fechai)[0], '%Y-%m-%d')
+    fechai_string = fechai.strftime('%d/%m/%Y')
+    fechaf = dt.strptime(re.split('T| ', fechaf)[0], '%Y-%m-%d')
+    fechaf_string = fechaf.strftime('%d/%m/%Y')
+    df = dfrepeticiondiarios(dforig, fechai_string, fechaf_string)
+    numeronoticias = str(df.iloc[0]['Count'] + df.iloc[1]['Count'] + df.iloc[2]['Count'])
+    frase = 'En total se analizaran ' + numeronoticias + ' noticias.'
+    fig = px.pie(df, names='Diario', values='Count', color='Count',
+                 color_discrete_sequence=["#257d98", "#51cba3", "#adf1ba"])
+    fig.layout = layout
+    return fig, frase
+
+
+@app.callback(Output('figrepeticioncategoria', 'figure'),
+              [Input('diarioDropdownRep', 'value'), Input('daterange', 'start_date'), Input('daterange', 'end_date')]
+              )
+def update_figure(diario, fechai, fechaf):
+    fechai = dt.strptime(re.split('T| ', fechai)[0], '%Y-%m-%d')
+    fechai_string = fechai.strftime('%d/%m/%Y')
+    fechaf = dt.strptime(re.split('T| ', fechaf)[0], '%Y-%m-%d')
+    fechaf_string = fechaf.strftime('%d/%m/%Y')
+    df = dfrepeticioncategorias(dforig, fechai_string, fechaf_string)
+    df = df[df['Diario'] == diario]
+    fig = px.bar(df, y='Categoria', x='Count', color='Count', orientation='h')
+    fig.layout = layout
+    return fig
+
+
+@app.callback([Output('barchart', 'figure'), Output('ngramscatter', 'figure')],
               [Input('slider', 'value'), Input('DiarioDropdown', 'value'), Input('CatDropdown', 'value')
                   , Input('daterange', 'start_date'), Input('daterange', 'end_date')]
               )
@@ -156,10 +341,15 @@ def update_figure(rango, diario, categoria, fechai, fechaf):
     if diario == 'La Nacion':
         noticia = dflanacion[dflanacion['Categoria'] == categoria]
     words = nltk.tokenize.word_tokenize(noticia['Corpus'].iloc[0])
-    dffreq = generardffrec(words)
-    fig = px.bar(dffreq.nlargest(rango, columns=['Frecuencia']), x='Palabra', y='Frecuencia', color='Frecuencia')
-    fig.layout = layout
-    return fig
+    dffreq1 = generardffrec(words)
+    hist = px.bar(dffreq1.nlargest(rango, columns=['Frecuencia']), x='Palabra', y='Frecuencia', color='Frecuencia')
+    hist.layout = layout
+    bgs = generardffrecbgs(words)
+    dffreq2 = preparardfbigramas(bgs)
+    scat = px.scatter(dffreq2.nlargest(rango, columns=['Frecuencia']), x='Palabra', y='Frecuencia', size='Longitud',
+                      color='Frecuencia', size_max=60)
+    scat.layout = layout
+    return hist, scat
 
 
 @app.callback(
@@ -186,5 +376,4 @@ def update_options(value, fechai, fechaf):
         return [{'label': categoria, 'value': categoria} for categoria in catlanacion], catlanacion[0]
 
 
-if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=False)
+app.run_server(debug=True, use_reloader=False)
