@@ -3,10 +3,7 @@
 Created on Thu Apr  2 19:08:59 2020
 
 @author: Lucas E. La Pietra
-Changes: animaciones de carga para graficos
-         link a LinkedIn en nombre
-         Borde del navbar
-         Corregido error en el grafico de categorias donde no cambiaba de diario
+Changes: Añadido titulo y favicon
 """
 
 import pandas as pd
@@ -152,6 +149,7 @@ topicpie = px.pie(dftopic, names='Topico', values='Num_Documentos', color='Num_D
 topicpie.layout = layout
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
+app.title = 'NLP-Noticias Corona'
 server = app.server
 
 BarraSuperior = dbc.Navbar(
