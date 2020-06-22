@@ -3,7 +3,10 @@
 Created on Thu Apr  2 19:08:59 2020
 
 @author: Lucas E. La Pietra
-Changes: transformada en app bootstrap
+Changes: animaciones de carga para graficos
+         link a LinkedIn en nombre
+         Borde del navbar
+         Corregido error en el grafico de categorias donde no cambiaba de diario
 """
 
 import pandas as pd
@@ -108,7 +111,14 @@ def preparardfbigramas(df):
 
 
 cantpalabras = 25
-dforig = pd.read_excel('https://github.com/luxlp/NoticiasScrapeadas/blob/master/BDNoticias-Abril.xlsx?raw=true')
+dforig = pd.read_excel('https://github.com/luxlp/NoticiasScrapeadas/blob/master/BDNoticias.xlsx?raw=true')
+dftopic = pd.read_excel('https://github.com/luxlp/NoticiasScrapeadas/blob/master/BDTopicos.xlsx?raw=true')
+dftopictable = dftopic[['Topico', 'Nombre_Topico', 'Keywords']]
+
+dftopicclarin = dforig[dforig['Diario'] == 'Clarin']
+dftopiclanacion = dforig[dforig['Diario'] == 'Clarin']
+dftopicinfobae = dforig[dforig['Diario'] == 'Clarin']
+
 df = transformdf(dforig, '25/04/2020', '30/04/2020')
 
 dfclarin = df[df['Diario'] == 'Clarin']
@@ -128,12 +138,20 @@ layout = Layout(
         family="Open Sans",
         size=12,
         color="#d8d8d8"
-    )
+    ),
+    margin=dict(
+        l=0,
+        r=0,
+        b=0,
+        t=30,
+        pad=4
+    ),
 )
-fig = px.bar(dffreq.nlargest(cantpalabras, columns=['Frecuencia']), x='Palabra', y='Frecuencia', color='Frecuencia')
-fig.layout = layout
+topicpie = px.pie(dftopic, names='Topico', values='Num_Documentos', color='Num_Documentos',
+                  color_discrete_sequence=["#b0f2bc", "#73e0a8", "#39b3a3", "#257d98"])
+topicpie.layout = layout
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__,external_stylesheets=[dbc.themes.DARKLY])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 server = app.server
 
 BarraSuperior = dbc.Navbar(
@@ -148,11 +166,11 @@ BarraSuperior = dbc.Navbar(
                     ], md=3),
                     dbc.Col([
                         html.H1(children='Frecuencia de palabras en las noticias sobre Coronavirus'),
-                        html.H5(children='Por Lucas La Pietra')
+                        html.A(html.H5(children='Por Lucas La Pietra'),href='https://www.linkedin.com/in/lucas-la-pietra-0b1ab6194/')
                     ])
                 ],
                 align="center",
-                no_gutters=True, className='navbar'
+                no_gutters=True
             )
         )
     ],
@@ -167,46 +185,49 @@ SeleccionFecha = [
         [
             dbc.Row(
                 dbc.Col([
-                    html.H4(children='Rango de fechas a analizar:'),
+                    html.H2(children='Rango de fechas a analizar:'),
                     dcc.DatePickerRange(
                         id='daterange',
-                        min_date_allowed=dt(2020, 4, 25),
-                        max_date_allowed=dt(2020, 4, 30),
-                        start_date=dt(2020, 4, 25).date(),
-                        end_date=dt(2020, 4, 30).date(),
+                        min_date_allowed=dt(2020, 5, 1),
+                        max_date_allowed=dt(2020, 5, 31),
+                        start_date=dt(2020, 5, 1).date(),
+                        end_date=dt(2020, 5, 31).date(),
                         display_format='D/M/Y',
                         calendar_orientation='horizontal'),
-                    html.H3(id='totalNoticias')
+                    html.H3(id='totalNoticias', className='totalNoticias')
                 ], width=6, className='daterow'
 
                 ), justify="center"
             ),
-            dbc.Row(
-                [
-                    dbc.Col([
-                        dbc.Jumbotron([
-                            html.H5(children='Distribucion de noticias por diario'),
-                            dcc.Graph(id='figrepeticiondiarios', style={"padding-top": 50})
+            dbc.Spinner(size="lg",
+                        children=[
+                            dbc.Row(
+                                [
+                                    dbc.Col([
+                                        dbc.Jumbotron([
+                                            html.H5(children='Distribucion de noticias por diario'),
+                                            dcc.Graph(id='figrepeticiondiarios', style={"padding-top": 50})
+                                        ])
+                                    ]
+                                        , md=6
+                                    ),
+                                    dbc.Col(
+                                        dbc.Jumbotron([
+                                            html.H5(children='Cantidad de noticias por categoria para el diario:'),
+                                            dcc.Dropdown(
+                                                id='diarioDropdownRep',
+                                                options=[
+                                                    {'label': 'Infobae', 'value': 'Infobae'},
+                                                    {'label': 'La Nacion', 'value': 'La Nacion'},
+                                                    {'label': 'Clarin', 'value': 'Clarin'}
+                                                ],
+                                                value='Infobae',
+                                                clearable=False),
+                                            dcc.Graph(id='figrepeticioncategoria')
+                                        ]), md=6
+                                    )
+                                ], style={"padding-top": 10}),
                         ])
-                    ]
-                        , md=6
-                    ),
-                    dbc.Col(
-                        dbc.Jumbotron([
-                            html.H5(children='Cantidad de noticias por categoria para el diario:'),
-                            dcc.Dropdown(
-                                id='diarioDropdownRep',
-                                options=[
-                                    {'label': 'Infobae', 'value': 'Infobae'},
-                                    {'label': 'La Nacion', 'value': 'La Nacion'},
-                                    {'label': 'Clarin', 'value': 'Clarin'}
-                                ],
-                                value='Infobae',
-                                clearable=False),
-                            dcc.Graph(id='figrepeticioncategoria')
-                        ]), md=6
-                    )
-                ], style={"padding-top": 10})
         ])
 ]
 
@@ -254,26 +275,110 @@ FreqHistGraph = [
                         value=25)], md=12
                 ), style={"padding-top": 10}
             ),
-            dbc.Row(
-                dbc.Col(
-                    [
-                        dbc.Jumbotron([
-                            html.H5(children='Distribucion de frecuencia de palabras'),
-                            dcc.Graph(id='barchart')
+            dbc.Spinner(size="lg",
+                        children=[
+                            dbc.Row(
+                                dbc.Col(
+                                    [
+                                        dbc.Jumbotron([
+                                            html.H5(children='Distribucion de frecuencia de palabras'),
+                                            dcc.Graph(id='barchart')
+                                        ])
+                                    ]
+                                    , md=12)
+                            ),
+                            dbc.Row(
+                                dbc.Col(
+                                    [
+                                        dbc.Jumbotron([
+                                            html.H5(children='N-gramas destacables'),
+                                            dcc.Graph(id='ngramscatter')
+                                        ])
+                                    ]
+                                    , md=12)
+                            )
                         ])
-                    ]
-                    , md=12)
+        ])
+]
+
+AnalisisTopicos = [
+    dbc.CardHeader(html.H5("Análisis de Topicos")),
+    dbc.CardBody(
+        [
+            dbc.Row(
+                dbc.Col([
+                    html.H3(
+                        children='A partir de un algoritmo LDA, se obtuvieron los siguientes 4 tópicos con una coherencia de 0.44'),
+                ], width=6, className='daterow'
+
+                ), justify="center"
             ),
             dbc.Row(
-                dbc.Col(
-                    [
+                [
+                    dbc.Col([
                         dbc.Jumbotron([
-                            html.H5(children='N-gramas destacables'),
-                            dcc.Graph(id='ngramscatter')
+                            html.H5(children='Distribucion de topicos en las noticias'),
+                            dcc.Graph(id='figrepeticiontopicos',
+                                      figure=topicpie,
+                                      style={"padding-top": 50})
                         ])
                     ]
-                    , md=12)
-            )
+                        , md=6
+                    ),
+                    dbc.Col(
+                        dbc.Jumbotron([
+                            html.H5(children='Palabras clave por topico:'),
+                            dbc.Table.from_dataframe(dftopictable, striped=True, dark=True, bordered=True, hover=True)
+                        ]), md=6
+                    )
+                ], style={"padding-top": 10}),
+            dbc.Row(
+                dbc.Col([
+                    html.H3(
+                        children='Aporte de noticias hacia un topico'),
+                ], width=6
+
+                ), justify="center"
+                , style={"padding-top": 40}),
+            dbc.Row(
+                [
+                    dbc.Col([
+                        html.H5('Seleccionar Topico:', style={"padding-top": 10}),
+                        dcc.Dropdown(
+                            id="TopicDropdown",
+                            options=[{'label': topico, 'value': topico} for topico in dftopic['Nombre_Topico']],
+                            value=dftopic['Nombre_Topico'][0],
+                            clearable=False,
+                        ),
+                        html.H5('Seleccionar Diario:', style={"padding-top": 30}),
+                        dcc.RadioItems(
+                            id='TopicRadioButtons',
+                            options=[
+                                {'label': 'Todos', 'value': 'Todos'},
+                                {'label': 'Infobae', 'value': 'Infobae'},
+                                {'label': 'La Nacion', 'value': 'La Nacion'},
+                                {'label': 'Clarin', 'value': 'Clarin'}
+                            ],
+                            value='Todos',
+                            labelStyle={'display': 'block'}
+                        )
+                    ]
+                        , md=3
+                    ),
+
+                    dbc.Col(
+                        dbc.Jumbotron([
+                            dbc.Spinner(size="lg",
+                                        children=[
+                                            dcc.Graph(id='topicscatter')]),
+                            html.Label(
+                                [
+                                    '*El grafico muestra la colaboracion de cada noticia a su tópico preponderante, '
+                                    'en cada noticia puede tratarse mas de un tópico.'])
+                        ]), md=9
+                    )
+
+                ], style={"padding-top": 10})
         ])
 ]
 
@@ -281,6 +386,7 @@ BODY = dbc.Container(
     [
         dbc.Row([dbc.Col(dbc.Card(SeleccionFecha), className="w-100"), ], style={"marginTop": 30}),
         dbc.Row([dbc.Col(dbc.Card(FreqHistGraph)), ], style={"marginTop": 30}),
+        dbc.Row([dbc.Col(dbc.Card(AnalisisTopicos)), ], style={"marginTop": 30}),
     ],
     className="mt-12",
 )
@@ -316,8 +422,8 @@ def update_figure(diario, fechai, fechaf):
     fechaf = dt.strptime(re.split('T| ', fechaf)[0], '%Y-%m-%d')
     fechaf_string = fechaf.strftime('%d/%m/%Y')
     df = dfrepeticioncategorias(dforig, fechai_string, fechaf_string)
-    df = df[df['Diario'] == diario]
-    fig = px.bar(df, y='Categoria', x='Count', color='Count', orientation='h')
+    dfdiario = df[df['Diario'] == diario]
+    fig = px.bar(dfdiario, y='Categoria', x='Count', color='Count', orientation='h')
     fig.layout = layout
     return fig
 
@@ -351,6 +457,28 @@ def update_figure(rango, diario, categoria, fechai, fechaf):
                       color='Frecuencia', size_max=60)
     scat.layout = layout
     return hist, scat
+
+
+@app.callback(Output('topicscatter', 'figure'),
+              [Input('TopicRadioButtons', 'value'), Input('TopicDropdown', 'value')]
+              )
+def update_figure(diario, topic):
+    if diario == 'Todos':
+        df = dforig
+    else:
+        if diario == 'Clarin':
+            df = dftopicclarin
+        else:
+            if diario == 'Infobae':
+                df = dftopicinfobae
+            else:
+                df = dftopiclanacion
+
+    df = df[df['Nombre_Topico'] == topic]
+    scat = px.scatter(df, x='Titulo', y='Porcentaje_Contribucion', size='Porcentaje_Contribucion',
+                      color='Porcentaje_Contribucion', size_max=10)
+    scat.layout = layout
+    return scat
 
 
 @app.callback(

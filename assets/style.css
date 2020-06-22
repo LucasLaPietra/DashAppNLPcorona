@@ -14,6 +14,20 @@ nav {
   background-color: #050505;
 }
 
+.navbar {
+  padding: 2px;
+  border: solid 1px black;
+}
+
+a {
+  color: #d8d8d8;
+}
+
+a:hover { 
+  color: #d8d8d8;
+}
+
+
 h1 {
   font-family: "Open Sans";
   font-weight: bold;
@@ -71,6 +85,10 @@ text-align: left;
 
 .daterow{
 text-align: center;
+}
+
+.totalNoticias{
+padding-top: 10px;
 }
 
 .rc-slider-track {
