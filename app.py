@@ -4,6 +4,9 @@ Created on Thu Apr  2 19:08:59 2020
 
 @author: Lucas E. La Pietra
 Changes: Añadido titulo y favicon
+         añadido logo GIBD
+         corregida ortografia
+         corregidas leyendas de grafico de dona de topicos
 """
 
 import pandas as pd
@@ -144,9 +147,18 @@ layout = Layout(
         pad=4
     ),
 )
-topicpie = px.pie(dftopic, names='Topico', values='Num_Documentos', color='Num_Documentos',
+topicpie = px.pie(dftopic, names='Nombre_Topico', values='Num_Documentos', color='Num_Documentos', hole=.5,
                   color_discrete_sequence=["#b0f2bc", "#73e0a8", "#39b3a3", "#257d98"])
 topicpie.layout = layout
+topicpie.update_layout(legend_orientation="h",
+                       margin=dict(
+                           l=0,
+                           r=0,
+                           b=0,
+                           t=0,
+                           pad=4
+                       )
+                       )
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 app.title = 'NLP-Noticias Corona'
@@ -161,7 +173,11 @@ BarraSuperior = dbc.Navbar(
                     dbc.Col([
                         html.A(html.Img(className="logo", src=app.get_asset_url("LogoUTN.png")),
                                href='http://www.frcu.utn.edu.ar/')
-                    ], md=3),
+                    ], md=2),
+                    dbc.Col([
+                        html.A(html.Img(className="logogibd", src=app.get_asset_url("LogoGIBD2.png")),
+                               href='http://www.frcu.utn.edu.ar/gibd')
+                    ], md=2),
                     dbc.Col([
                         html.H1(children='Frecuencia de palabras en las noticias sobre Coronavirus'),
                         html.A(html.H5(children='Por Lucas La Pietra'),href='https://www.linkedin.com/in/lucas-la-pietra-0b1ab6194/')
@@ -178,7 +194,7 @@ BarraSuperior = dbc.Navbar(
 )
 
 SeleccionFecha = [
-    dbc.CardHeader(html.H5("Numero de noticias a analizar")),
+    dbc.CardHeader(html.H5("Número de noticias a analizar")),
     dbc.CardBody(
         [
             dbc.Row(
@@ -203,7 +219,7 @@ SeleccionFecha = [
                                 [
                                     dbc.Col([
                                         dbc.Jumbotron([
-                                            html.H5(children='Distribucion de noticias por diario'),
+                                            html.H5(children='Distribución de noticias por diario'),
                                             dcc.Graph(id='figrepeticiondiarios', style={"padding-top": 50})
                                         ])
                                     ]
@@ -211,7 +227,7 @@ SeleccionFecha = [
                                     ),
                                     dbc.Col(
                                         dbc.Jumbotron([
-                                            html.H5(children='Cantidad de noticias por categoria para el diario:'),
+                                            html.H5(children='Cantidad de noticias por categoría para el diario:'),
                                             dcc.Dropdown(
                                                 id='diarioDropdownRep',
                                                 options=[
@@ -230,7 +246,7 @@ SeleccionFecha = [
 ]
 
 FreqHistGraph = [
-    dbc.CardHeader(html.H5("Analisis de frecuencia")),
+    dbc.CardHeader(html.H5("Análisis de frecuencia")),
     dbc.CardBody(
         [
             dbc.Row(
@@ -249,7 +265,7 @@ FreqHistGraph = [
                         )], md=6
                     ),
                     dbc.Col([
-                        html.Label('Seleccionar categoria:'),
+                        html.Label('Seleccionar categoría:'),
                         dcc.Dropdown(
                             id="CatDropdown",
                             options=[{'label': categoria, 'value': categoria} for categoria in categorias],
@@ -279,7 +295,7 @@ FreqHistGraph = [
                                 dbc.Col(
                                     [
                                         dbc.Jumbotron([
-                                            html.H5(children='Distribucion de frecuencia de palabras'),
+                                            html.H5(children='Distribución de frecuencia de palabras'),
                                             dcc.Graph(id='barchart')
                                         ])
                                     ]
@@ -300,13 +316,14 @@ FreqHistGraph = [
 ]
 
 AnalisisTopicos = [
-    dbc.CardHeader(html.H5("Análisis de Topicos")),
+    dbc.CardHeader(html.H5("Análisis de Tópicos")),
     dbc.CardBody(
         [
             dbc.Row(
                 dbc.Col([
                     html.H3(
-                        children='A partir de un algoritmo LDA, se obtuvieron los siguientes 4 tópicos con una coherencia de 0.44'),
+                        children='Se aplica un algoritmo de análisis de tópicos para identificar los "temas" de los '
+                                 'que se hablan en las noticias'),
                 ], width=6, className='daterow'
 
                 ), justify="center"
@@ -315,7 +332,7 @@ AnalisisTopicos = [
                 [
                     dbc.Col([
                         dbc.Jumbotron([
-                            html.H5(children='Distribucion de topicos en las noticias'),
+                            html.H5(children='Distribución de tópicos en las noticias'),
                             dcc.Graph(id='figrepeticiontopicos',
                                       figure=topicpie,
                                       style={"padding-top": 50})
@@ -325,15 +342,19 @@ AnalisisTopicos = [
                     ),
                     dbc.Col(
                         dbc.Jumbotron([
-                            html.H5(children='Palabras clave por topico:'),
-                            dbc.Table.from_dataframe(dftopictable, striped=True, dark=True, bordered=True, hover=True)
-                        ]), md=6
+                            html.H5(children='Tópicos y palabras clave:'),
+                            dbc.Table.from_dataframe(dftopictable, striped=True, dark=True, bordered=True, hover=True),
+                            html.Label(
+                                [
+                                    '*A partir de un algoritmo LDA, se obtuvieron los siguientes 4 tópicos con una '
+                                    'coherencia de 0.44'])
+                                ])
                     )
                 ], style={"padding-top": 10}),
             dbc.Row(
                 dbc.Col([
                     html.H3(
-                        children='Aporte de noticias hacia un topico'),
+                        children='Aporte de noticias hacia un tópico'),
                 ], width=6
 
                 ), justify="center"
@@ -341,7 +362,7 @@ AnalisisTopicos = [
             dbc.Row(
                 [
                     dbc.Col([
-                        html.H5('Seleccionar Topico:', style={"padding-top": 10}),
+                        html.H5('Seleccionar Tópico:', style={"padding-top": 10}),
                         dcc.Dropdown(
                             id="TopicDropdown",
                             options=[{'label': topico, 'value': topico} for topico in dftopic['Nombre_Topico']],
@@ -371,7 +392,7 @@ AnalisisTopicos = [
                                             dcc.Graph(id='topicscatter')]),
                             html.Label(
                                 [
-                                    '*El grafico muestra la colaboracion de cada noticia a su tópico preponderante, '
+                                    '*El gráfico muestra la colaboración de cada noticia a su tópico preponderante, '
                                     'en cada noticia puede tratarse mas de un tópico.'])
                         ]), md=9
                     )

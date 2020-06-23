@@ -75,6 +75,13 @@ width: 150px;
 padding: 10px;
 }
 
+.logogibd {
+width: 130px;
+padding: 10px;
+padding-top: 5px;
+padding-right: 0px;
+}
+
 .jumbotron {
   background-color: #444444;
 }
