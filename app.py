@@ -403,7 +403,7 @@ AnalisisTopicos = [
 
 BODY = dbc.Container(
     [
-        dbc.Row([dbc.Col(dbc.Card(SeleccionFecha), className="w-100"), ], style={"marginTop": 30}),
+        dbc.Row([dbc.Col(dbc.Card(SeleccionFecha), className="w-100", md=12) ], style={"marginTop": 30}),
         dbc.Row([dbc.Col(dbc.Card(FreqHistGraph)), ], style={"marginTop": 30}),
         dbc.Row([dbc.Col(dbc.Card(AnalisisTopicos)), ], style={"marginTop": 30}),
     ],
@@ -525,4 +525,4 @@ def update_options(value, fechai, fechaf):
 
 
 if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=False)
+    app.run_server(debug=False, use_reloader=False)
